@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Order;
-use app\Models\orderItem;
-use app\Models\producto;
+use App\Models\orderItem;
+use App\Models\Producto;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 
@@ -31,8 +31,8 @@ class OrderController extends Controller
             //definimos la variable orders para almacenar el resultado de la consulta
             $orders = $query->orderBy('created_at', 'desc')->get();
 
-            
-            return response()->json($orders); 
+
+            return response()->json($orders);
 
         } catch (\Exception $e) {
             return response()->json([
@@ -56,7 +56,6 @@ class OrderController extends Controller
                 'subtotal' => 'required|numeric|min:0',
                 'impuesto' => 'required|numeric|min:0',
                 'total' => 'required|numeric|min:0',
-                'estado' => 'required|string|max:255',
                 'items' => 'required|array|min:1',
                 'items.*.producto_id' => 'required|exists:productos,id',
                 'items.*.cantidad' => 'required|integer|min:1',
@@ -80,7 +79,7 @@ class OrderController extends Controller
                 OrderItem::create([
                     'cantidad' => $item['cantidad'],
                     'precio_unitario' => $producto->precio,
-                    'subtotal' => $subt,
+                    'subtotal' => $subtotalItem,
                     'producto_id' => $item['producto_id'],
                     'order_id' => $order->id,
                 ]);
@@ -139,6 +138,55 @@ class OrderController extends Controller
 
         //
     }
+    public function GestionarEstado(Request $request,$id){
+        try {
+            //odtener la orden de la bd
+            $order = Order::findOrFail($id);
+            //validar el nuevo estado
+            $data = $request->validate([
+                'estado' => 'required|string|in:pendiente,pagada,cancelada,rembolsada,entregada',
+            ]);
+            //actualizar el estado de la orden
+            $nuevoEstado = $data['estado'];
+            //odtener el estado actual de la orden
+            $estadoActual = $order->estado;
+            //definimos reglas de transición de estados
+            $transicionesValidas = [
+                'pendiente' => ['pagada', 'cancelada'],
+                'pagada' => ['entregada', 'reembolsada'],
+                'entregada' => ['reembolsada'],
+                'reembolsada' => [],
+                'cancelada' => [],
+            ];
+            //verificar si la transición es válida
+            if (!in_array($nuevoEstado, $transicionesValidas[$estadoActual])) {
+                return response()->json([
+                    'message' => "no se puede cambiar de  $estadoActual a $nuevoEstado",
+                ], 400);
+            }
+            //actualizar el estado de la orden
+            $order->estado = $nuevoEstado;
+            //si estado == 'entregada' actualiza la fecha de entrega
+            if ($nuevoEstado == 'entregada') {
+                $order->fecha_entrega = now();
+            }
+            $order->update();
+            return response()->json([
+                'message' => "la orden $order->correlativo ha sido actualizada a estado $nuevoEstado",
+                'order' => $order->load('items.producto')
+            ], 200);
+
+
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Ocurrió un error inesperado al cancelar la orden con ID = ' . $id,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
     private function generateCorrelativo()
     {
         $year = now()->format('Y');

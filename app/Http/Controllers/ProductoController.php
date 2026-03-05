@@ -238,5 +238,45 @@ class ProductoController extends Controller
             ],500);
         }
     }
-    public function destroy(string $id){}
+    
+    public function destroy(string $id)
+    {
+        try {
+        // Buscar el producto con sus imágenes
+        $producto = Producto::with('imagenes')->findOrFail($id);
+        DB::beginTransaction();
+
+        // Eliminar imágenes físicas
+        foreach ($producto->imagenes as $img) {
+            $ruta = public_path('images/productos/' . $img->nombre);
+
+            if (file_exists($ruta)) {
+                unlink($ruta);
+            }
+
+            // Eliminar registro de la imagen
+            $img->delete();
+        }
+
+        // Eliminar el producto
+        $producto->delete();
+
+        DB::commit();
+
+        return response()->json([
+            'message' => 'Producto eliminado correctamente'
+        ], 200);
+    } catch (ModelNotFoundException $e) {
+        return response()->json([
+            'message' => 'No se encontró el producto con ID = ' . $id
+        ], 404);
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            'message' => 'Error al eliminar el producto',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+    }
+
 }
