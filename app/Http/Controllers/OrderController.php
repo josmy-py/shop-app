@@ -14,12 +14,12 @@ class OrderController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
 
     {
         try{
             // Lógica para obtener la lista de órdenes
-            $query = Order::with(['user','items.producto', 'pagos'])->get();
+            $query = Order::with(['user','items.producto', 'pagos']);
             // filtramos por el usuario autenticado
             if (request()->estado) {
                 $query->where('estado', request()->estado);
@@ -29,7 +29,7 @@ class OrderController extends Controller
                 $query->where('user_id', request()->user_id);
             }
             //definimos la variable orders para almacenar el resultado de la consulta
-            $orders = $query->orderBy('created_at', 'desc')->get();
+            $orders = $query->orderBy('fecha', 'desc')->get();
 
 
             return response()->json($orders);
