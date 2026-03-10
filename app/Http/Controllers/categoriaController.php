@@ -17,10 +17,10 @@ class categoriaController extends Controller
         try {
             //resultado ordenado por id de forma descendente
             //$categorias = Categoria::all();
-            $categoria = Categoria::orderBy('id', 'desc')->get();
+            $categorias = Categoria::orderBy('id', 'desc')->get();
 
 
-            return response()->json($categorias,);
+            return response()->json($categorias);
         }catch (\Exception $e) {
             return response()->json(['mensaje' => 'Error al obtener las categorías', 'error' => $e->getMessage()], 500);
         }
@@ -120,7 +120,7 @@ class categoriaController extends Controller
             return response()->json([
                 'message' => 'Categoria actualizada correctamente',
                 'categoria' => $categoria
-            ],202);    
+            ],202);
         }catch(ModelNotFoundException $e){
             return response()->json([
                 'message' => 'categoría no encontrada con ID = ' .$id,
@@ -139,7 +139,7 @@ class categoriaController extends Controller
      * Remove the specified resource from storage.
      */
     public function destroy(string $id)
-    { 
+    {
         try {
             $categoria = categoria::with('productos')->findOrFail($id);
 
