@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Categoria;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class categoriaController extends Controller
 {
@@ -55,8 +56,8 @@ class categoriaController extends Controller
         }catch (validationExcepcion $e) {
             return response()->json([
                 'mensaje' => 'Error al obtener las categorías',
-                'error' => $e->getMessage()
-                ],500);
+                'errores' => $e->errors()
+                ],422);
 
         }catch (\Exception $e) {
             return response()->json([
