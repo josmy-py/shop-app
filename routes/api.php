@@ -29,3 +29,4 @@ route::apiResource('marcas', MarcaController::class);
 route::apiResource('orders', OrderController::class);
 //definimos una ruta para obtener las órdenes de un usuario específico
 Route::put('ordenes/estado/{id}', [OrderController::class, 'gestionarEstado']);
+Route::patch('productos/{id}/toggle-activo',[ProductoController::class,'toggleActivo']);

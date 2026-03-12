@@ -278,5 +278,21 @@ class ProductoController extends Controller
         ], 500);
     }
     }
+        public function toggleActivo($id)
+    {
+
+        $producto = Producto::findOrFail($id);
+
+        $producto->activo = !$producto->activo;
+
+        $producto->save();
+
+        return response()->json([
+            'message' => $producto->activo
+                ? 'Producto activado'
+                : 'Producto desactivado'
+        ]);
+
+    }
 
 }
